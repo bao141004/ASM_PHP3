@@ -12,6 +12,7 @@ use App\Http\Requests\OrderRequest;
 use App\Models\BinhLuan;
 use App\Models\DonHang;
 use App\Models\HinhAnhPet;
+use App\Models\Slider;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use PhpParser\Node\Stmt\TryCatch;
@@ -46,30 +47,49 @@ class PetControllerView extends Controller
 
     public function index(Request $request, DanhMuc $danhMuc)
     {
-        $search = $request->input('search');
         $danhMucs = $danhMuc->getDanhMuc();
         $uniquePetsCount = $this->getUniquePetsCount();
         $query = $this->pet->getPet();
-        if ($search) {
-            $query->where('ten_pet', 'like', "%{$search}%");
-            $searchResults = $query->get();
-            if ($searchResults->isNotEmpty()) {
-                return redirect()->route('/.shop', ['search' => $search]);
-            } else {
-                return view('layouts.clients.index', compact('danhMucs', 'uniquePetsCount', 'search'));
-            }
-        } else {
-            $list = $query->get();
-            return view('layouts.clients.index', compact('list', 'danhMucs', 'uniquePetsCount'));
-        }
+        $sliders = Slider::query()->get();
+        $list = $query->where('trang_thai', 1)->get();
+        return view('layouts.clients.index', compact('list', 'danhMucs', 'uniquePetsCount', 'sliders'));
+    
     }
 
     public function shop(Request $request, DanhMuc $danhMuc)
+    {
+        $danhMucs = $danhMuc->getDanhMuc();
+        $uniquePetsCount = $this->getUniquePetsCount();
+        $query = $this->pet->getPet();
+        $sliders = Slider::query()->get();
+        $list = $query->where('trang_thai', 1)->get();
+        return view('layouts.clients.shop', compact('list', 'danhMucs', 'uniquePetsCount', 'sliders'));
+    
+    }
+    public function shopSearch(Request $request, DanhMuc $danhMuc)
     {
         $search = $request->input('search');
         $danhMucs = $danhMuc->getDanhMuc();
         $uniquePetsCount = $this->getUniquePetsCount();
         $query = $this->pet->getPet();
+        $sliders = Slider::query()->get();
+       
+        if ($search) {
+            $list =  $query->where('danh_mucs.ten_danh_muc', 'like', '%'.$search.'%')
+            ->orwhere('pets.ten_pet', 'like', '%'.$search.'%')->get();
+            return view('layouts.clients.shop', compact('danhMucs', 'uniquePetsCount', 'list', 'sliders'));
+        } else {
+            $list = $query->where('trang_thai', 1)->get();
+            return view('layouts.clients.shop', compact('list', 'danhMucs', 'uniquePetsCount', 'sliders'));
+        }
+    }
+
+    public function shopDanhMuc(Request $request, DanhMuc $danhMuc, $id)
+    {
+        $search = $request->input('search');
+        $danhMucs = $danhMuc->getDanhMuc();
+        $uniquePetsCount = $this->getUniquePetsCount();
+        $query = $this->pet->getPet()->where('trang_thai', 1)->where('danh_muc_id', $id);
         if ($search) {
             $query->where('ten_pet', 'like', "%{$search}%");
         }
@@ -77,19 +97,19 @@ class PetControllerView extends Controller
 
         return view('layouts.clients.shop', compact('list', 'danhMucs', 'uniquePetsCount', 'search'));
     }
-
+    
 
     public function shopSingle(string $id)
     {
         $list = $this->pet->find($id);
+        $listImage = HinhAnhPet::where('pet_id', $id)->get();
         $featuredProducts = $this->pet->take(6)->get(); // Truy xuất danh sách sản phẩm nổi bật
         $uniquePetsCount = $this->getUniquePetsCount();
-
-        return view('layouts.clients.shop-single', compact('list', 'featuredProducts', 'uniquePetsCount'));
+        return view('layouts.clients.shop-single', compact('list', 'featuredProducts', 'uniquePetsCount', 'listImage'));
     }
 
     public function addPetToCart(string $id, int $so_luong = 1)
-{
+    {
     $userId = auth()->id();
     if (!$userId) {
         return redirect()->back()->with('error', 'bạn phải đăng nhập trước khi add');
@@ -97,7 +117,7 @@ class PetControllerView extends Controller
     $pet = Pet::findOrFail($id);
     $cartKey = 'cart_' . $userId;
     $cart = session()->get($cartKey, []);
-    // dd($cart[$id]);
+    // dd($cart);
 
     if (isset($cart[$id])) {
         $cart[$id]['so_luong'] += $so_luong;
@@ -124,15 +144,70 @@ class PetControllerView extends Controller
     session()->put($cartKey, $cart);
     // dd(session()->get($cartKey)); // Kiểm tra giỏ hàng trong session
     return redirect()->back()->with('success', 'Thêm pet vào giỏ hàng thành công');
-}
+    }
 
+    // Update khi thêm các sản phẩm ngoài trang cart
+    public function update(Request $request)
+    {
+        $id = $request->id;
+        $quantity = $request->quantity;
+        $userId = auth()->id();
+    
+        // Cập nhật số lượng sản phẩm trong giỏ hàng trong session
+        $cartKey = 'cart_' . $userId;
+        $cart = session()->get($cartKey);
+    
+        if (isset($cart[$id])) {
+            $cart[$id]['so_luong'] = $quantity;
+            session()->put($cartKey, $cart);
+        }
+    
+        // Cập nhật số lượng sản phẩm trong giỏ hàng trong cơ sở dữ liệu
+        $existingCartItem = DB::table('gio_hangs')->where('user_id', $userId)->where('id', $id)->first();
+        if ($existingCartItem) {
+            DB::table('gio_hangs')->where('user_id', $userId)->where('id', $id)
+                ->update(['so_luong' => $quantity]);
+        }
+    
+        // Tính toán lại tổng tiền
+        $total = 0;
+        foreach ($cart as $details) {
+            $total += $details['gia_pet'] * $details['so_luong'];
+        }
+    
+        return response()->json(['total' => $total]);
+    }
 
+    // Update tại trang cart
+    public function updateCart(Request $request)
+    {
+    // Get the cart items from the request
+    $cartItems = $request->input('cartItems', []);
+
+    // Get the current user's cart key
+    $cartKey = 'cart_' . Auth::id();
+
+    // Get the existing cart from the session
+    $cart = session()->get($cartKey, []);
+
+    // Update the cart with the new quantities
+    foreach ($cartItems as $id => $item) {
+        if (isset($cart[$id])) {
+            $cart[$id]['so_luong'] = $item['so_luong'];
+        }
+    }
+
+    // Save the updated cart back to the session
+    session()->put($cartKey, $cart);
+
+    return redirect()->back()->with('success', 'Cập nhật giỏ hàng thành công!');
+    }
 
     public function deletePetCart(Request $request)
     {
         $userId = auth()->id();
         if (!$userId) {
-            return response()->json(['error' => 'You need to be logged in to modify the cart'], 403);
+            return response()->json(['error' => 'Bạn cần đăng nhập trước!'], 403);
         }
         if ($request->id) {
             $cartKey = 'cart_' . $userId;
@@ -142,7 +217,6 @@ class PetControllerView extends Controller
                 session()->put($cartKey, $cart);
 
                 DB::table('gio_hangs')->where('user_id', $userId)->where('id', $request->id)->delete();
-                return response()->json(['success' => 'Xóa pet khỏi giỏ hàng thành công.']);
             }
         }
 
@@ -196,6 +270,11 @@ class PetControllerView extends Controller
     {
         return view('layouts.clients.profile');
     }
+    public function profileEdit(Request $request)
+    {
+        return view('layouts.clients.profileEdit');
+    }
+   
     public function showDonHang()
     {
         $donHangs = Auth::user()->donHang;
@@ -271,5 +350,4 @@ class PetControllerView extends Controller
         $comment->thoi_gian = $thoi_gian;
         $comment->save();
     }
-
 }

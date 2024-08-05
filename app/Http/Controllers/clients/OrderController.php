@@ -8,7 +8,9 @@ use Illuminate\Support\Facades\DB;
 use App\Http\Requests\OrderRequest;
 use App\Http\Controllers\Controller;
 use Carbon\Carbon;
+use App\Mail\OrderConfirm;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 
 class OrderController extends Controller
 {
@@ -85,6 +87,7 @@ class OrderController extends Controller
                 ]);
             }
             DB::commit();
+            Mail::to($donHang->email_nguoi_nhan)->queue(New OrderConfirm($donHang));
             session()->put($cartKey, []);
             return redirect()->route('/.thank')->with('success', 'Đơn hàng đã được tạo thành công');
         } catch (\Exception $e) {

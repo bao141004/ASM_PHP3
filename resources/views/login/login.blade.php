@@ -36,7 +36,7 @@
                         <!-- Nested Row within Card Body -->
                         <div class="row">
                             <div class="col-lg-6 d-none d-lg-block bg-login-image text-center ">
-                                <img src="{{ asset('assets/admin/img/login.jpg') }}" alt="">
+                                {{-- <img src="{{ asset('assets/admin/img/login.jpg') }}" alt=""> --}}
                             </div>
 
                             <div class="col-lg-6">
@@ -48,6 +48,9 @@
                                         @endif
                                         @if (session('success'))
                                             <p class="alert alert-success">{{ session('success') }}</p>
+                                        @endif
+                                        @if (session('warning'))
+                                            <p class="alert alert-warning">{{ session('warning') }}</p>
                                         @endif
                                     </div>
                                     <form id="loginForm" action="{{ route('postLogin') }}" method="POST">

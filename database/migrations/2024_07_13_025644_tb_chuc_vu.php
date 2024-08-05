@@ -14,6 +14,9 @@ return new class extends Migration
         Schema::create('chuc_vus', function (Blueprint $table) {
             $table ->id();
             $table->string('ten_chuc_vu',255);
+            $table->tinyInteger('deleted')->default(0);
+           $table->softDeletes();
+            $table->timestamps();
         });
     }
 

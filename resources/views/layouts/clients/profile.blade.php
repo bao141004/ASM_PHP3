@@ -12,7 +12,7 @@
         </div>
     </div>
     @if (session('success'))
-        <div class="alert alert-success">
+        <div class=" text-center alert alert-success">
             {{ session('success') }}
         </div>
     @endif
@@ -37,7 +37,7 @@
                                     <td class="h5 text-black">{{ Auth::user()->name }}</td>
                                     <td class="h5 text-black">{{ Auth::user()->email }}</td>
                                     <td class="h5 text-black">{{ Auth::user()->phoneNumber == null ? 'Chưa cập nhật' : Auth::user()->phoneNumber }}</td>
-                                    <td class="h5 text-black">{{ Auth::user()->address == null ? 'Chưa cập nhật' : Auth::user()->address == null }}</td>
+                                    <td class="h5 text-black">{{ Auth::user()->address == null ? 'Chưa cập nhật' : Auth::user()->address }}</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -47,7 +47,7 @@
             <div class="d-flex justify-content-center">
                 <div class="d-flex align-items-center">
                     <div class="mr-3">
-                        <a href="#" class="btn btn-warning">Cập nhật thông tin</a>
+                        <a href="{{route('/.profileEdit', Auth::user()->id)}}" class="btn btn-warning">Cập nhật thông tin</a>
                     </div>
                     <div>
                         <a href="#" class="btn btn-secondary">Đổi mật khẩu</a>
