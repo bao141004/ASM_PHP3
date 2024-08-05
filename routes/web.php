@@ -18,7 +18,9 @@ use App\Http\Controllers\Admins\ThongKeController;
 use App\Http\Controllers\AuthenController;
 use App\Http\Controllers\clients\OrderController;
 use App\Http\Controllers\clients\PetControllerView;
+use App\Http\Controllers\Admins\GiamGiaController;
 use App\Models\DonHang;
+use App\Models\GiamGia;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -40,6 +42,8 @@ Route::post('/postRegister', [AuthenController::class, 'postRegister'])->name('p
 // Route::get('/auth', [AuthenController::class, 'getAuth'])->name('auth');
 
 
+Route::get('admins/giamgia/trash', [GiamGiaController::class, 'trash']);
+Route::post('admins/giamgia/delete', [GiamGiaController::class, 'delete'])->name('admin.giamgia.delete');
 Route::get('admins/khachhang/trash', [UserController::class, 'trash']);
 Route::post('admins/khachhang/delete', [UserController::class, 'delete'])->name('admin.khachhang.delete');
 Route::post('admins/khachhang/restore', [UserController::class, 'restore'])->name('admin.khachhang.restore');
@@ -68,6 +72,7 @@ Route::group([
     Route::resource('trang_thai_don_hangs', TrangThaiDonHangController::class);
     Route::resource('phuong_thuc_thanh_toans', PhuongThucThanhToanController::class);
     Route::resource('don_hangs', DonHangController::class);
+    Route::resource('giam_gias', GiamGiaController::class);
     Route::resource('chi_tiet_don_hangs', ChiTietDonHangController::class);
     Route::resource('danh-muc', DanhMucController::class);
     Route::resource('pet', PetController::class);

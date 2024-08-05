@@ -66,6 +66,7 @@
                 <a class="collapse-item" href="{{route('admin.trang_thai_don_hangs.index')}}">Trạng thái đơn hàng</a>
                 <a class="collapse-item" href="{{route('admin.phuong_thuc_thanh_toans.index')}}">Phương thức thanh toán</a>
                 <a class="collapse-item" href="{{route('admin.don_hangs.index')}}">Đơn hàng</a>
+                <a class="collapse-item" href="{{route('admin.giam_gias.index')}}">Giảm giá</a>
                 {{-- <a class="collapse-item" href="{{route('admin.chi_tiet_don_hangs.index')}}">Chi tiết đơn hàng</a> --}}
             </div>
         </div>
